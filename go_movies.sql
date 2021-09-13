@@ -90,6 +90,12 @@ select id, movie_id, genre_id, created_at, updated_at, g.id, g.genre_name, g.cre
 select id, genre_name, created_at, updated_at from genres order by genre_name;
 select movie_id from movies_genres where genre_id = 1;
 
+insert into movies(title, description, year, release_date, runtime, rating, mpaa_rating, created_at, updated_at)
+ values($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id;
+
+update movies set title = $1, description = $2, year = $3, release_date = $4, runtime = $5,
+                  rating = $6, mpaa_rating = $7, updated_at = $8 where id = $9;
+
 --
 -- Name: movies_genres_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --

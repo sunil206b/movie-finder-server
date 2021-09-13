@@ -17,6 +17,10 @@ const (
 	GetAllMovies = `select id, title, description, year, release_date, runtime, rating, mpaa_rating, 
        				created_at, updated_at from movies %s order by title`
 	GetAllGenres = `select id, genre_name, created_at, updated_at from genres order by genre_name`
+	CreateMovie  = `insert into movies(title, description, year, release_date, runtime, rating, mpaa_rating, created_at, updated_at)
+ 					values($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`
+	UpdateMovie = `update movies set title = $1, description = $2, year = $3, release_date = $4, runtime = $5, 
+                  rating = $6, mpaa_rating = $7, updated_at = $8 where id = $9`
 )
 
 type Repo struct {
@@ -130,10 +134,54 @@ func (r *Repo) DeleteMovie(id int) error {
 }
 
 func (r *Repo) CreateMovie(movie *models.Movie) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	stmt, err := r.DB.Prepare(CreateMovie)
+	if err != nil {
+		return err
+	}
+	id := 0
+	err = stmt.QueryRowContext(ctx,
+		movie.Title,
+		movie.Description,
+		movie.Year,
+		movie.ReleaseDate,
+		movie.RunTime,
+		movie.Rating,
+		movie.MPAARating,
+		movie.CreatedAt,
+		movie.UpdatedAt,
+	).Scan(&id)
+	if err != nil {
+		return err
+	}
+	movie.ID = id
 	return nil
 }
 
 func (r *Repo) UpdateMovie(movie *models.Movie) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	stmt, err := r.DB.Prepare(UpdateMovie)
+	if err != nil {
+		return err
+	}
+	_, err = stmt.ExecContext(ctx,
+		movie.Title,
+		movie.Description,
+		movie.Year,
+		movie.ReleaseDate,
+		movie.RunTime,
+		movie.Rating,
+		movie.MPAARating,
+		movie.UpdatedAt,
+		movie.ID,
+	)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
